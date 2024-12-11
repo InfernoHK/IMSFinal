@@ -7,8 +7,8 @@ import random
 
 global  inventory
 global sales_velocity
-global daycount
-daycount = 1
+day_counter = 0
+
 
 class Item:
   def __init__(self, name, current_numbers, max_capacity, sell_price, cost_price):
@@ -89,7 +89,10 @@ def menu(choices):
         print(cursor.down()*(len(choices)-pos)+cursor.show())
         return number
     stdout.flush()
+
+
 def main_menu():
+  
   
         
   choice = menu(["Storage","New Day","Changes","Finances"])
@@ -107,6 +110,7 @@ def main_menu():
     Finances()
             
 def Storage():
+  
   global inventory  # Make sure inventory is accessible
     
   choice = menu(["Add Item","Delete Item", "View Inventory","Exit"])
@@ -130,9 +134,11 @@ def Storage():
   elif choice == 4:
     main_menu()
 
+  os.system('clear')
 
 def NewDay():
-    daycount =+ 1
+    os.system('clear')
+    
 
     print("Starting new day...")
     simulate_sales()
@@ -140,36 +146,42 @@ def NewDay():
 
 
 def simulate_sales():
+    global day_counter
+    day_counter += 1
     for item in inventory.items:
         # Generate random number of items sold between 0 and current stock
         items_sold = random.randint(0, item.current_numbers)
         item.current_numbers -= items_sold
         print(f"Sold {items_sold} units of {item.name}")
         print(f"Remaining stock: {item.current_numbers}")
-        sales_velocity.append(itmes_sold)
+        
+       
 
-def changes():
-    LEAD_TIME = 7  # days
-    if daycount > 5:  # days
-    
-      for item in inventory.items:
-          # Calculate sales velocity (average daily sales)
-          sales_velocity = (item.max_capacity - item.current_numbers) / daycount
-          
-          # Calculate reorder point using lead time
-          reorder_point = sales_velocity * LEAD_TIME
-          
-          # Calculate suggested order quantity
-          safety_stock = sales_velocity * 2  # Buffer stock for 2 days
-          suggested_order = (reorder_point + safety_stock) - item.current_numbers
-          
-          print(f"\nAnalysis for {item.name}:")
-          print(f"Sales Velocity: {sales_velocity:.2f} units per day")
-          print(f"Reorder Point: {reorder_point:.2f} units")
-          if suggested_order > 0:
-              print(f"Suggested Order: {suggested_order:.2f} units")
-              print(f"Estimated Cost: ${suggested_order * item.cost_price:.2f}")
-          else:
-              print("Stock levels adequate - no order needed")
-      else:
-        print("Analysis not available yet. Please wait until day 5.")
+def Changes():
+  os.system('clear')
+  LEAD_TIME = 7  # days
+  if day_counter >= 5:  # days
+  
+    for item in inventory.items:
+        # Calculate sales velocity (average daily sales)
+        sales_velocity = (item.max_capacity - item.current_numbers)/day_counter
+        
+        
+        # Calculate reorder point using lead time
+        reorder_point = sales_velocity * LEAD_TIME
+        
+        # Calculate suggested order quantity
+        safety_stock = sales_velocity * 2  # Buffer stock for 2 days
+        suggested_order = (reorder_point + safety_stock) - item.current_numbers
+        
+        print(f"\nAnalysis for {item.name}:")
+        print(f"Sales Velocity: {sales_velocity:.2f} units per day")
+        print(f"Reorder Point: {reorder_point:.2f} units")
+        if suggested_order > 0:
+            print(f"Suggested Order: {suggested_order:.2f} units")
+            print(f"Estimated Cost: ${suggested_order * item.cost_price:.2f}")
+        else:
+            print("Stock levels adequate - no order needed")
+  else:
+    print("Analysis not available yet. Please wait until day 5.")
+    main_menu()
