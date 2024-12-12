@@ -10,6 +10,8 @@ global sales_velocity
 global money
 money = 10000  # Starting money, you can adjust this initial amount
 day_counter = 0
+global total_purchases
+total_purchases = 0
 
 
 
@@ -195,6 +197,7 @@ def show_analysis():
                 if accept.lower() == 'y':
                     money -= total_cost
                     item.current_numbers += suggested_order
+                    total_purchases += total_cost
                     print(f"\nOrder accepted! Purchased {suggested_order:.0f} units of {item.name}")
                     print(f"New stock level: {item.current_numbers}")
                     print(f"Current balance: ${money:.2f}")
@@ -213,7 +216,7 @@ def NewDay():
     print("Starting new day...")
     simulate_sales()
     if automation == True:
-       global money, pending_orders
+       global money, pending_orders, total_purchases
     
        if day_counter >= 5:
           for item in inventory.items:
@@ -225,13 +228,15 @@ def NewDay():
                     suggested_order = min(
                     (reorder_point + safety_stock) - item.current_numbers,
                     item.max_capacity - item.current_numbers
-                )
+                    )
+                    suggested_order = round(suggested_order)
                 
                     if suggested_order > 0:
                       total_cost = suggested_order * item.cost_price
                       if money >= total_cost:
                           money -= total_cost
                           item.current_numbers += suggested_order
+                          total_purchases += total_cost
                           print(f"\nAuto-reorder triggered for {item.name}")
                           print(f"Ordered {suggested_order:.0f} units")
                           print(f"Delivery expected in 7 days")
@@ -302,6 +307,8 @@ def purchase_stock():
                         if confirm.lower() == 'y':
                             money -= total_cost
                             item.current_numbers += amount
+                            total_purchases += total_cost
+                          
                             print(f"\nSuccessfully purchased {amount} units of {item.name}")
                             print(f"New stock level: {item.current_numbers}")
                             print(f"Current balance: ${money:.2f}")
@@ -342,6 +349,7 @@ def Finances():
         current_inventory_value += item.current_numbers * item.cost_price
     
     # Calculate net profit
+    total_spending += total_purchases
     net_profit = gross_income - total_spending
     
     print(f"Current Balance: ${money:.2f}")
