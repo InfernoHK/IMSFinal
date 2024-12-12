@@ -95,12 +95,27 @@ def menu(choices):
         return number
     stdout.flush()
 
+def automatic_orders():
+  global automation
+  automation = input("Turn on automatic orders? (y/n): ")
+  if automation == "y":
+    automation = True
+    print("Automatic orders turned on")
+   
+    main_menu()
+
+
+  else:
+    automation = False
+    print("Automatic orders turned off")
+    main_menu()
+   
 
 def main_menu():
   
   
         
-  choice = menu(["Storage","New Day","Changes","Finances","Exit"])
+  choice = menu(["Storage","New Day","Changes","Finances","Automatic Orders","Exit"])
   if choice == 1:
     Storage()
         
@@ -113,8 +128,11 @@ def main_menu():
           
   elif choice == 4:
     Finances()
-    
+
   elif choice == 5:
+    automatic_orders()
+
+  elif choice == 6:
     exit()
             
 def Storage():
@@ -147,33 +165,10 @@ def Storage():
     main_menu()
     os.system('clear')
 
-def NewDay():
-    os.system('clear')
-    
-
-    print("Starting new day...")
-    simulate_sales()
-    main_menu()
-
-
-def simulate_sales():
-    global day_counter
-    day_counter += 1
-    for item in inventory.items:
-        # Generate random number of items sold between 0 and current stock
-        items_sold = random.randint(0, int(item.current_numbers/2))
-        item.current_numbers -= items_sold
-        print(f"Sold {items_sold} units of {item.name}")
-        print(f"Remaining stock: {item.current_numbers}")
-        
-       
-
-def Changes():
-    os.system('clear')
-    show_analysis()
 
 def show_analysis():
     global money
+    global reorder_point
     LEAD_TIME = 7
     if day_counter >= 5:
         for item in inventory.items:
@@ -211,39 +206,67 @@ def show_analysis():
     input("\nPress Enter to continue...")
     main_menu()
 
-def Finances():
+def NewDay():
     os.system('clear')
-    print("\nFinancial Overview")
-    print("------------------------")
     
-    total_spending = 0
-    gross_income = 0
-    current_inventory_value = 0
-    
-    for item in inventory.items:
-        # Calculate spending (initial stock + any purchases)
-        initial_stock_cost = item.max_capacity * item.cost_price
-        total_spending += initial_stock_cost
-        
-        # Calculate gross income from sales
-        items_sold = item.max_capacity - item.current_numbers
-        gross_income += items_sold * item.sell_price
-        
-        # Calculate current inventory value
-        current_inventory_value += item.current_numbers * item.cost_price
-    
-    # Calculate net profit
-    net_profit = gross_income - total_spending
-    
-    print(f"\nTotal Spending: ${total_spending:.2f}")
-    print(f"Gross Income: ${gross_income:.2f}")
-    print(f"Net Profit: ${net_profit:.2f}")
-    print(f"Current Inventory Value: ${current_inventory_value:.2f}")
-    print("------------------------")
-    
-    input("\nPress Enter to return to main menu...")
-    main_menu()
 
+    print("Starting new day...")
+    simulate_sales()
+    if automation == True:
+       global money, pending_orders
+    
+       if day_counter >= 5:
+          for item in inventory.items:
+              sales_velocity = (item.max_capacity - item.current_numbers)/day_counter
+              reorder_point = sales_velocity * 7  # LEAD_TIME
+              safety_stock = sales_velocity * 2
+            
+              if item.current_numbers <= reorder_point:
+                    suggested_order = min(
+                    (reorder_point + safety_stock) - item.current_numbers,
+                    item.max_capacity - item.current_numbers
+                )
+                
+                    if suggested_order > 0:
+                      total_cost = suggested_order * item.cost_price
+                      if money >= total_cost:
+                          money -= total_cost
+                          item.current_numbers += suggested_order
+                          print(f"\nAuto-reorder triggered for {item.name}")
+                          print(f"Ordered {suggested_order:.0f} units")
+                          print(f"Delivery expected in 7 days")
+
+                      else:
+                          print(f"\nInsufficient funds to reorder {item.name}")
+  
+    main_menu()
+    
+def Changes():
+    os.system('clear')
+    show_analysis()
+
+def simulate_sales():
+    global day_counter
+    LEAD_TIME = 7
+
+    day_counter += 1
+    for item in inventory.items:
+        # Generate random number of items sold between 0 and current stock
+        items_sold = random.randint(0, int(item.current_numbers/2))
+        item.current_numbers -= items_sold
+        print(f"Sold {items_sold} units of {item.name}")
+        print(f"Remaining stock: {item.current_numbers}")
+        
+        # Calculate reorder point based on sales velocity
+        if day_counter >= 5:
+            sales_velocity = (item.max_capacity - item.current_numbers)/day_counter
+            reorder_point = sales_velocity * LEAD_TIME
+            
+            # Check if current stock is below reorder point
+            if item.current_numbers <= reorder_point:
+                print(f"WARNING: {item.name} stock ({item.current_numbers:.0f}) is below reorder point ({reorder_point:.0f})")
+                print(f"Consider restocking soon!")
+        print("------------------------")
 
 
 def purchase_stock():
@@ -330,3 +353,7 @@ def Finances():
     
     input("\nPress Enter to return to main menu...")
     main_menu()
+
+
+  
+    
