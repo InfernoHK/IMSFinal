@@ -4,7 +4,8 @@ from getkey import getkey, keys
 from ansi.color import fg
 from ansi import cursor
 import random
-
+global automation
+automation = False
 global inventory
 global sales_velocity
 global money
