@@ -1,3 +1,3 @@
 # IMS-FInal-
 # This is for Inventory Managment Systems (IMS) 
-# Note 
+# Note not fleshed out whatsoever

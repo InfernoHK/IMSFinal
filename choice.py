@@ -5,9 +5,14 @@ from ansi.color import fg
 from ansi import cursor
 import random
 
-global  inventory
+global inventory
 global sales_velocity
+global money
+money = 10000  # Starting money, you can adjust this initial amount
 day_counter = 0
+
+
+
 
 
 class Item:
@@ -95,7 +100,7 @@ def main_menu():
   
   
         
-  choice = menu(["Storage","New Day","Changes","Finances"])
+  choice = menu(["Storage","New Day","Changes","Finances","Exit"])
   if choice == 1:
     Storage()
         
@@ -108,12 +113,15 @@ def main_menu():
           
   elif choice == 4:
     Finances()
+    
+  elif choice == 5:
+    exit()
             
 def Storage():
   
   global inventory  # Make sure inventory is accessible
     
-  choice = menu(["Add Item","Delete Item", "View Inventory","Exit"])
+  choice = menu(["Add Item","Delete Item", "View Inventory","Purchase Inventory","Exit"])
   if choice == 1:
       name = input("Enter item name: ")
       current_numbers = int(input(f"Enter current numbers for {name}: "))
@@ -131,10 +139,13 @@ def Storage():
   elif choice == 3:
     inventory.view_inventory()
     Storage()
-  elif choice == 4:
-    main_menu()
 
-  os.system('clear')
+  elif choice == 4:
+    purchase_stock()
+
+  elif choice == 5:
+    main_menu()
+    os.system('clear')
 
 def NewDay():
     os.system('clear')
@@ -150,7 +161,7 @@ def simulate_sales():
     day_counter += 1
     for item in inventory.items:
         # Generate random number of items sold between 0 and current stock
-        items_sold = random.randint(0, item.current_numbers)
+        items_sold = random.randint(0, int(item.current_numbers/2))
         item.current_numbers -= items_sold
         print(f"Sold {items_sold} units of {item.name}")
         print(f"Remaining stock: {item.current_numbers}")
@@ -158,30 +169,164 @@ def simulate_sales():
        
 
 def Changes():
-  os.system('clear')
-  LEAD_TIME = 7  # days
-  if day_counter >= 5:  # days
-  
+    os.system('clear')
+    show_analysis()
+
+def show_analysis():
+    global money
+    LEAD_TIME = 7
+    if day_counter >= 5:
+        for item in inventory.items:
+            sales_velocity = (item.max_capacity - item.current_numbers)/day_counter
+            reorder_point = sales_velocity * LEAD_TIME
+            safety_stock = sales_velocity * 2
+            
+            suggested_order = min(
+                (reorder_point + safety_stock) - item.current_numbers,
+                item.max_capacity - item.current_numbers
+            )
+            
+            print(f"\nAnalysis for {item.name}:")
+            print(f"Sales Velocity: {sales_velocity:.2f} units per day")
+            print(f"Reorder Point: {reorder_point:.2f} units")
+            if suggested_order > 0:
+                print(f"Suggested Order: {suggested_order:.2f} units")
+                total_cost = suggested_order * item.cost_price
+                print(f"Estimated Cost: ${total_cost:.2f}")
+                print(f"Current Balance: ${money:.2f}")
+                print(f"Balance after purchase will be: ${money - total_cost:.2f}")
+                
+                accept = input("\nWould you like to accept this order? (y/n): ")
+                if accept.lower() == 'y':
+                    money -= total_cost
+                    item.current_numbers += suggested_order
+                    print(f"\nOrder accepted! Purchased {suggested_order:.0f} units of {item.name}")
+                    print(f"New stock level: {item.current_numbers}")
+                    print(f"Current balance: ${money:.2f}")
+            else:
+                print("Stock levels adequate - no order needed")
+    else:
+        print("Analysis not available yet. Please wait until day 5.")
+    
+    input("\nPress Enter to continue...")
+    main_menu()
+
+def Finances():
+    os.system('clear')
+    print("\nFinancial Overview")
+    print("------------------------")
+    
+    total_spending = 0
+    gross_income = 0
+    current_inventory_value = 0
+    
     for item in inventory.items:
-        # Calculate sales velocity (average daily sales)
-        sales_velocity = (item.max_capacity - item.current_numbers)/day_counter
+        # Calculate spending (initial stock + any purchases)
+        initial_stock_cost = item.max_capacity * item.cost_price
+        total_spending += initial_stock_cost
         
+        # Calculate gross income from sales
+        items_sold = item.max_capacity - item.current_numbers
+        gross_income += items_sold * item.sell_price
         
-        # Calculate reorder point using lead time
-        reorder_point = sales_velocity * LEAD_TIME
+        # Calculate current inventory value
+        current_inventory_value += item.current_numbers * item.cost_price
+    
+    # Calculate net profit
+    net_profit = gross_income - total_spending
+    
+    print(f"\nTotal Spending: ${total_spending:.2f}")
+    print(f"Gross Income: ${gross_income:.2f}")
+    print(f"Net Profit: ${net_profit:.2f}")
+    print(f"Current Inventory Value: ${current_inventory_value:.2f}")
+    print("------------------------")
+    
+    input("\nPress Enter to return to main menu...")
+    main_menu()
+
+
+
+def purchase_stock():
+    global money
+    os.system('clear')
+    print("\nPurchase Stock")
+    print("------------------------")
+    print(f"Current Balance: ${money:.2f}")
+    
+    inventory.view_inventory()
+    
+    name = input("\nEnter item name to purchase stock: ")
+    
+    for item in inventory.items:
+        if item.name == name:
+            available_space = item.max_capacity - item.current_numbers
+            if available_space <= 0:
+                print(f"\nStorage is full for {item.name}!")
+                input("\nPress Enter to continue...")
+                Storage()
+                return
+                
+            print(f"\nAvailable space: {available_space}")
+            while True:
+                try:
+                    amount = int(input(f"Enter amount to purchase (max {available_space}): "))
+                    if amount <= available_space and amount > 0:
+                        total_cost = amount * item.cost_price
+                        print(f"\nTotal cost: ${total_cost:.2f}")
+                        print(f"Balance after purchase will be: ${money - total_cost:.2f}")
+                        confirm = input("Confirm purchase? (y/n): ")
+                        
+                        if confirm.lower() == 'y':
+                            money -= total_cost
+                            item.current_numbers += amount
+                            print(f"\nSuccessfully purchased {amount} units of {item.name}")
+                            print(f"New stock level: {item.current_numbers}")
+                            print(f"Current balance: ${money:.2f}")
+                        break
+                    else:
+                        print("Invalid amount. Please try again.")
+                except ValueError:
+                    print("Please enter a valid number.")
+            
+            input("\nPress Enter to continue...")
+            Storage()
+            return
+    
+    print(f"Item '{name}' not found.")
+    input("\nPress Enter to continue...")
+    Storage()
+
+
+def Finances():
+    os.system('clear')
+    print("\nFinancial Overview")
+    print("------------------------")
+    
+    total_spending = 0
+    gross_income = 0
+    current_inventory_value = 0
+    
+    for item in inventory.items:
+        # Calculate spending (initial stock + any purchases)
+        initial_stock_cost = item.max_capacity * item.cost_price
+        total_spending += initial_stock_cost
         
-        # Calculate suggested order quantity
-        safety_stock = sales_velocity * 2  # Buffer stock for 2 days
-        suggested_order = (reorder_point + safety_stock) - item.current_numbers
+        # Calculate gross income from sales
+        items_sold = item.max_capacity - item.current_numbers
+        gross_income += items_sold * item.sell_price
         
-        print(f"\nAnalysis for {item.name}:")
-        print(f"Sales Velocity: {sales_velocity:.2f} units per day")
-        print(f"Reorder Point: {reorder_point:.2f} units")
-        if suggested_order > 0:
-            print(f"Suggested Order: {suggested_order:.2f} units")
-            print(f"Estimated Cost: ${suggested_order * item.cost_price:.2f}")
-        else:
-            print("Stock levels adequate - no order needed")
-  else:
-    print("Analysis not available yet. Please wait until day 5.")
+        # Calculate current inventory value
+        current_inventory_value += item.current_numbers * item.cost_price
+    
+    # Calculate net profit
+    net_profit = gross_income - total_spending
+    
+    print(f"Current Balance: ${money:.2f}")
+    print(f"Total Spending: ${total_spending:.2f}")
+    print(f"Gross Income: ${gross_income:.2f}")
+    print(f"Net Profit: ${net_profit:.2f}")
+    print(f"Current Inventory Value: ${current_inventory_value:.2f}")
+    print("------------------------")
+    
+    input("\nPress Enter to return to main menu...")
     main_menu()
