@@ -9,5 +9,5 @@
 # Features
 ## Inventory Management from buying, tracking, selling and deletion/updates
 ## User Management
-## Automation of Inventory updates an Inventory Stock/Quantity
+## Automation of Inventory updates and Inventory Stock/Quantity
 ## Manual Inventory Updates and Stock/Quantity
