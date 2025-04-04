@@ -1,4 +1,4 @@
-# IMS-FInal-
+# IMS-Final-
 ## This is an Inventory Management Systems (IMS), meant to be used for a small business to keep track of and buy Inventory.
 ## This is a work in progress and is not yet complete. 
 ## Note not fleshed out whatsoever
