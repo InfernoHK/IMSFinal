@@ -1,0 +1,7 @@
+Please Write down the lines below in any terminal or command prompt to setup the project.
+git clone https://github.com/InfernoHK/IMSFinal.git
+cd IMSFinal
+python3 -m venv venv
+venv\Scripts\activate   source venv/bin/activate(for linux)
+pip install getkey ansi
+python main.py

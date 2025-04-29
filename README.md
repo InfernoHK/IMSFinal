@@ -1,7 +1,7 @@
 # IMS-Final-
 ## This is an Inventory Management Systems (IMS), meant to be used for a small business to keep track of and buy Inventory.
 ## This is a work in progress and is not yet complete. 
-## Note not fleshed out whatsoever
+## Please read the setup.txt file for setup instructions. (Please dont use powershell, use cmd or terminal)
 ## Make sure to install dependices (install in the console)
 ## pip install ansi, pip install getkey
 ## For most interactions in the console you can use the arrow keys to navigate and enter to select. You can also use WASD keys to navigate.
